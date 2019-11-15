@@ -8,9 +8,7 @@
 
 import Foundation
 
-@objcMembers open class PaymentezDebitParameters:NSObject
-
-{
+@objcMembers open class PaymentezDebitParameters: NSObject {
     open var uid = ""
     open var token = ""
     open var productAmount = 0.0
@@ -31,22 +29,15 @@ import Foundation
     open var shippingDistrict = ""
     open var shippingAdditionalAddressInfo = ""
     
-    public override init()
-    {
-        
-    }
-    
-    func requiredUserDict() ->[String:Any]
-    {
+    func requiredUserDict() -> [String:Any] {
         var dic = [String:Any]()
         dic["id"] = self.uid
         dic["email"] = self.email
         if self.buyerFiscalNumber != ""{dic["fiscal_number"] = self.buyerFiscalNumber }
         return dic
-        
     }
-    func requiredProductDict()->[String:Any]
-    {
+    
+    func requiredProductDict() -> [String:Any] {
         var dic = [String:Any]()
         dic["amount"] = self.productAmount
         dic["description"] = self.productDescription
@@ -159,17 +150,8 @@ class PaymentezRequest
         completeUrl += "?" + encodeParamsGet(parameters)
         return completeUrl
     }
-    func encodeParamsJson(_ parameters:NSDictionary) ->Data?
-    {
-        do
-        {
-            
-            let data = try JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted)
-            return data
-        }
-        catch {
-            return nil
-        }
+    func encodeParamsJson(_ parameters:NSDictionary) -> Data? {
+        return try? JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted)
     }
     
     func encodeParams(_ parameters:NSDictionary) ->Data?

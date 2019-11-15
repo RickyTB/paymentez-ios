@@ -9,59 +9,59 @@
 import UIKit
 
 
-@objc public protocol PaymentezCardAddedDelegate
-{
-    func cardAdded(_ error:PaymentezSDKError?, _ cardAdded:PaymentezCard?)
-    func viewClosed()
+@objc public protocol PaymentezCardAddedDelegate {
+    func cardAdded(_ error: PaymentezSDKError?, _ cardAdded: PaymentezCard?)
+    @objc optional func viewClosed()
 }
-
-
-
 
 open class PaymentezAddNativeViewController: UIViewController {
     
-    open var backgroundColor:UIColor = .white {
-        didSet{
+    open var backgroundColor: UIColor? = .white {
+        didSet {
             setupColor()
         }
     }
+    
     open var baseColor = PaymentezStyle.baseBaseColor {
         didSet {
             setupColor()
         }
     }
+    
     open var baseFont = PaymentezStyle.font {
         didSet {
             setupColor()
         }
     }
-    open var baseFontColor:UIColor = .black {
+    
+    open var baseFontColor: UIColor? = .black {
         didSet {
             setupColor()
         }
     }
     
     var bundle = Bundle(for: PaymentezCard.self)
-    var titleString:String  = "Add Card".localized
-   
-    internal var isModal = false
-    open var showLogo:Bool = true {
+    var titleString: String  = "Add Card".localized
+    open var isModal: Bool = false
+    
+    open var showLogo: Bool = true {
         didSet {
             self.paymentezLogo.isHidden = !self.showLogo
         }
     }
     
-    let buttonMessage = ["off":"Continue without code".localized, "on": "Continue with NIP".localized]
+    let buttonMessage = ["off": "Continue without code".localized, "on": "Continue with NIP".localized]
+    
     private var showNip = true {
-        didSet{
+        didSet {
             self.toggleNip(show: showNip) // show
         }
     }
+    
     private var showTuya = false {
         didSet {
             self.toggleTuya(show: self.showTuya)
         }
-        
     }
     
     private var showOtp = false {
@@ -69,16 +69,15 @@ open class PaymentezAddNativeViewController: UIViewController {
             if self.showOtp{
                 self.useSMSButton.isHidden = false
             } else {
-                
                 self.useSMSButton.isHidden = true
             }
         }
     }
     
-    let paymentezCard:PaymentezCard = PaymentezCard()
+    let paymentezCard: PaymentezCard = PaymentezCard()
     
-    var uid:String?
-    var email:String?
+    var uid: String!
+    var email: String!
     
     let mainView: UIStackView = {
         let stackView = UIStackView()
@@ -151,6 +150,16 @@ open class PaymentezAddNativeViewController: UIViewController {
     open var invalidCardTitle = "Invalid Card Number".localized
     
     open var invalidDocumentTitle = "Invalid".localized
+    
+    open var shouldShowScanCard = true {
+        didSet {
+            if shouldShowScanCard, scanButton.superview == nil {
+                self.cardNumberView.addArrangedSubview(self.scanButton)
+            } else {
+                self.scanButton.removeFromSuperview()
+            }
+        }
+    }
     
     let cardField: SkyFloatingLabelTextField = {
         let field = SkyFloatingLabelTextField()
@@ -235,6 +244,7 @@ open class PaymentezAddNativeViewController: UIViewController {
 
         return imageView
     }()
+    
     let cvcImageView : UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named:"stp_card_cvc", in: Bundle(for: PaymentezCard.self), compatibleWith: nil)
@@ -251,10 +261,10 @@ open class PaymentezAddNativeViewController: UIViewController {
         return btn
     }()
     
-    let addButton: UIButton = {
+    lazy var addButton: UIButton = {
         let btn = UIButton()
-        btn.backgroundColor = PaymentezStyle.baseBaseColor
-        btn.tintColor = PaymentezStyle.baseFontColor
+        btn.backgroundColor = baseColor
+        btn.tintColor = baseFontColor
         btn.layer.cornerRadius = 5
         btn.clipsToBounds = true
         btn.setTitle("Add Card".localized, for: .normal)
@@ -262,29 +272,28 @@ open class PaymentezAddNativeViewController: UIViewController {
         return btn
     }()
     
-    let spinner: UIActivityIndicatorView = {
+    lazy var spinner: UIActivityIndicatorView = {
         let sp = UIActivityIndicatorView(style: .whiteLarge)
-        sp.color = PaymentezStyle.baseBaseColor
+        sp.color = baseColor
         sp.translatesAutoresizingMaskIntoConstraints = false
         sp.hidesWhenStopped = true
         sp.startAnimating()
         return sp
     }()
     
-    let spinnerView: UIView = {
+    lazy var spinnerView: UIView = {
         let view = UIView()
         view.isHidden = true
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor.init(red: 1, green: 1, blue: 1, alpha: 0.8)
+        view.backgroundColor = backgroundColor?.withAlphaComponent(0.8)
         return view
     }()
     
-    
     // SWITCH
-    @objc var isWidget:Bool = true
+    @objc var isWidget: Bool = false
     
     //DELEGATE
-    @objc public var addDelegate:PaymentezCardAddedDelegate?
+    @objc public var delegate: PaymentezCardAddedDelegate?
     
     //MASK DELEGATES
     var cardMaskedDelegate: MaskedTextFieldDelegate!
@@ -299,10 +308,8 @@ open class PaymentezAddNativeViewController: UIViewController {
     var expirationMask:Mask = try! Mask(format: "[00]/[00]")
     var cvcMask:Mask = try! Mask(format: "[0009]")
     
-    
-    var cardType:PaymentezCardType =  PaymentezCardType.notSupported {
+    var cardType: PaymentezCardType =  PaymentezCardType.notSupported {
         didSet {
-        
             self.paymentezCard.cardType = self.cardType
             DispatchQueue.main.async {
                 // change card
@@ -317,23 +324,19 @@ open class PaymentezAddNativeViewController: UIViewController {
     
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        
     }
     
-    @objc public init(isWidget:Bool, isModal:Bool = false)
-    {
+    @objc public init(uid: String, email: String) {
         super.init(nibName: nil, bundle: nil)
-        self.isWidget = isWidget
-        self.isModal = isModal
-        setupViews()
+        self.uid = uid
+        self.email = email
     }
-    
     
     override open func viewDidLoad() {
         super.viewDidLoad()
-        
-        
+        setupViews()
     }
+    
     override open func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
@@ -346,8 +349,10 @@ open class PaymentezAddNativeViewController: UIViewController {
         setupViewLayouts()
     }
     
-    private func setupColor(){
+    private func setupColor() {
         self.view.backgroundColor = backgroundColor
+        spinnerView.backgroundColor = backgroundColor?.withAlphaComponent(0.8)
+            
         //SETUP COLOR
         cardField.selectedLineColor = baseColor
         nameField.selectedLineColor = baseColor
@@ -361,6 +366,8 @@ open class PaymentezAddNativeViewController: UIViewController {
         nameField.selectedTitleColor = baseColor
         expirationField.selectedTitleColor = baseColor
         cvcField.selectedTitleColor = baseColor
+        addButton.backgroundColor = baseColor
+        spinner.color = baseColor
         
         cardField.textColor = baseFontColor
         nameField.textColor = baseFontColor
@@ -374,6 +381,7 @@ open class PaymentezAddNativeViewController: UIViewController {
         nameField.textColor = baseFontColor
         expirationField.textColor = baseFontColor
         cvcField.textColor = baseFontColor
+        addButton.tintColor = baseFontColor
         
         cardField.font = baseFont
         nameField.font = baseFont
@@ -390,7 +398,7 @@ open class PaymentezAddNativeViewController: UIViewController {
         
     }
     
-    private func setupMask(){
+    private func setupMask() {
         //SETUP MASK
         self.cardMaskedDelegate = MaskedTextFieldDelegate(format: "[0000]-[0000]-[0000]-[0009]")
         self.cardMaskedDelegate.listener = self
@@ -417,51 +425,46 @@ open class PaymentezAddNativeViewController: UIViewController {
         documentMask.listener = self
         self.documentField.delegate = documentMask
         
-        
     }
     
     private func setupAddPresentation(){
-        if self.isWidget{
+        guard !self.isWidget else {
             self.addButton.isHidden = true
-            
-        }else{
-            //CONFIGURE ADDBUTTON
-            self.title = self.titleString
-            self.addButton.isHidden = false
-            self.addButton.addTarget(self, action: #selector(self.addCard(_:)), for: .touchUpInside)
-            self.view.addSubview(self.addButton)
-            
-            //self.addButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10).isActive = true
-            self.addButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
-            self.addButton.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 10).isActive = true
-            self.addButton.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -10).isActive = true
-            
-            // Create close button
-            if isModal {
-                let barBtn = UIBarButtonItem(image: UIImage(named:"icon_close", in: self.bundle, compatibleWith: nil), style: .plain, target: self, action: #selector(close(_:)))
-                barBtn.tintColor = PaymentezStyle.baseFontColor
-                self.navigationItem.rightBarButtonItem = barBtn
-            }
-            
-            let tap = UITapGestureRecognizer(target: self.view, action: #selector(self.view.endEditing(_:)))
-            tap.cancelsTouchesInView = false
-            self.view.addGestureRecognizer(tap)
-            
-            //Configure Spinner
-            
-            self.spinnerView.addSubview(self.spinner)
-            
-            
-
+            return
         }
+        //CONFIGURE ADDBUTTON
+        self.title = self.titleString
+        self.addButton.isHidden = false
+        self.addButton.addTarget(self, action: #selector(self.addCard(_:)), for: .touchUpInside)
+        self.view.addSubview(self.addButton)
+        
+        //self.addButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10).isActive = true
+        self.addButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        self.addButton.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 10).isActive = true
+        self.addButton.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -10).isActive = true
+        
+        // Create close button
+        if isModal {
+            let barBtn = UIBarButtonItem(image: UIImage(named:"icon_close", in: self.bundle, compatibleWith: nil), style: .plain, target: self, action: #selector(close(_:)))
+            barBtn.tintColor = PaymentezStyle.baseFontColor
+            self.navigationItem.rightBarButtonItem = barBtn
+        }
+        
+        let tap = UITapGestureRecognizer(target: self.view, action: #selector(self.view.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
+        
+        //Configure Spinner
+        
+        self.spinnerView.addSubview(self.spinner)
     }
-    private func setupViewLayouts(){
+    private func setupViewLayouts() {
         //SETUP nameView
         self.nameView.addArrangedSubview(self.nameField)
         
-        //SETUP cardNumberView
-        
         self.scanButton.addTarget(self, action: #selector(self.scanCard(_:)), for: .touchUpInside)
+        
+        //SETUP cardNumberView
         self.cardNumberView.addArrangedSubview(self.logoView)
         self.cardNumberView.addArrangedSubview(self.cardField)
         self.cardNumberView.addArrangedSubview(self.scanButton)
@@ -533,17 +536,15 @@ open class PaymentezAddNativeViewController: UIViewController {
         self.mainView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -10).isActive = true
     }
     
-    private func toggleTuya(show:Bool){
-        
+    private func toggleTuya(show:Bool) {
         if !show {
             // dismiss
             self.tuyaView.isHidden = true
             self.verificationView.isHidden = false
             self.mainView.insertArrangedSubview(self.verificationView, at: 2)
             self.tuyaView.removeFromSuperview()
-        } else if show {
+        } else {
             // show
-            //
             self.tuyaView.isHidden = false
             self.verificationView.isHidden = true
             self.mainView.insertArrangedSubview(self.tuyaView, at: 2)
@@ -588,37 +589,21 @@ open class PaymentezAddNativeViewController: UIViewController {
     
     //MARK: Card Validation Methods
     
-    private func validateCard(_ cardNumber:String){
-        PaymentezCard.validate(cardNumber: (self.cardField.text?.replacingOccurrences(of: "-", with: ""))!) { (cardType, imageUrl, cvvLength, mask, showOtp) in
-            
-            self.cardType = cardType
+    private func validateCard(_ cardNumber:String) {
+        PaymentezCard.validate(cardNumber: self.cardField.text!.replacingOccurrences(of: "-", with: "")) { (brand: PaymentezBrand?) in
+            guard let brand = brand else { return }
             DispatchQueue.main.async {
-                
-                self.showOtp = showOtp
-                
-                if let img = imageUrl{
-                    self.loadImageFromUrl(urlString: img)
-                }
-                if cvvLength == 4{
-                    self.cvcImageView.image = UIImage(named:"stp_card_cvc_amex", in: Bundle(for: PaymentezCard.self), compatibleWith: nil)
-                }else{
-                    self.cvcImageView.image = UIImage(named:"stp_card_cvc", in: Bundle(for: PaymentezCard.self), compatibleWith: nil)
-
-                }
-                if cardType == .alkosto || cardType == .exito {
-                    self.toggleTuya(show:true)
-                }else {
-                    self.toggleTuya(show:false)
-                }
+                self.cardType = brand.type
+                self.logoView.image = UIImage(named: brand.imagePath, in: Bundle(for: PaymentezCard.self), compatibleWith: nil)
+                let cvcImagePath = brand.type == .amex ? "stp_card_cvc_amex" : "stp_card_cvc"
+                self.cvcImageView.image = UIImage(named:cvcImagePath, in: Bundle(for: PaymentezCard.self), compatibleWith: nil)
+                self.toggleTuya(show: brand.type == .alkosto || brand.type == .exito)
             }
         }
     }
     
-     @objc open func getValidCard()->PaymentezCard?
-    {
-        
-        
-        if self.paymentezCard.cardType == .notSupported{
+     @objc open func getValidCard() -> PaymentezCard? {
+        if self.paymentezCard.cardType == .notSupported {
             return nil
         }
         guard let _ = self.paymentezCard.cardHolder else {
@@ -644,7 +629,7 @@ open class PaymentezAddNativeViewController: UIViewController {
             
             return self.paymentezCard
             
-        }else { // las demás
+        } else { // las demás
             guard let _ = self.paymentezCard.cvc else {
                  self.cvcField.errorMessage = "Invalid".localized
                 return nil
@@ -700,8 +685,7 @@ open class PaymentezAddNativeViewController: UIViewController {
                 self.paymentezCard.cardNumber = self.cardField.text?.replacingOccurrences(of: "-", with: "")
                 self.cardType = PaymentezCard.getTypeCard((self.paymentezCard.cardNumber)!)
                 let valExp = self.expirationField.text!.components(separatedBy: "/")
-                if valExp.count > 1
-                {
+                if valExp.count > 1 {
                     let expiryYear = Int(valExp[1])! + 2000
                     let expiryMonth = valExp[0]
                     self.paymentezCard.expiryYear =  "\(expiryYear)"
@@ -716,77 +700,49 @@ open class PaymentezAddNativeViewController: UIViewController {
                 } else {
                     self.validateCard(cardNumber)
                 }
-                
             }
         }
     }
     
     //MARK: Actions
     
-    @objc func close(_ sender:Any){
+    @objc func close(_ sender: Any){
         self.dismiss(animated: true) {
-            self.addDelegate?.viewClosed()
+            self.delegate?.viewClosed?()
         }
     }
     
     @objc func addCard(_ sender: Any) {
         self.view.endEditing(true)
-        if !isWidget
-        {
-            guard let uid  = self.uid else {
-                return
-            }
-            guard let email = self.email else {
-                return
-            }
-            if let validCard = self.getValidCard() {
-                self.showSpinner()
-                PaymentezSDKClient.add(validCard, uid: uid, email: email, callback: { [weak self] (error, cardAdded) in
-                    self?.hideSpinner()
-                    DispatchQueue.main.async {
-                        if self?.isModal ?? false {
-                            self?.dismiss(animated: true, completion: {
-                                self?.addDelegate?.cardAdded(error, cardAdded)
-                            })
-                        }else{
-                            self?.navigationController?.popViewController(animated: true)
-                            self?.addDelegate?.cardAdded(error, cardAdded)
-                        }
+        guard !isWidget, let uid  = self.uid, let email = self.email else { return }
+        if let validCard = self.getValidCard() {
+            self.showSpinner()
+            PaymentezSDKClient.add(validCard, uid: uid, email: email, callback: { [weak self] (error, cardAdded) in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.hideSpinner()
+                    if self.isModal {
+                        self.dismiss(animated: true, completion: {
+                            self.delegate?.cardAdded(error, cardAdded)
+                        })
+                    } else {
+                        self.navigationController?.popViewController(animated: true)
+                        self.delegate?.cardAdded(error, cardAdded)
                     }
-                    
-                })
-            }
+                }
+            })
+        } else {
+            self.delegate?.cardAdded(PaymentezSDKError.createError(403, description: "Card Not Supported", help: "Change Number", type:nil), nil)
         }
     }
     
 }
-//MARK: Load CardImage
-extension PaymentezAddNativeViewController{
-    func loadImageFromUrl(urlString:String){
-        guard let url = URL(string: urlString) else{
-            return
-        }
-        URLSession.shared.dataTask(with: url) { (data, response, error) in
-            if error ==  nil {
-                if let imageData = data{
-                    DispatchQueue.main.async {
-                        
-                        self.logoView.image = UIImage(data: imageData) ?? UIImage(named:"stp_card_unknown", in: Bundle(for: PaymentezCard.self), compatibleWith: nil)!
-                    }
-                }
-            }
-            }.resume()
-    }
-}
 
-
-extension PaymentezAddNativeViewController: MaskedTextFieldDelegateListener
-{
+extension PaymentezAddNativeViewController: MaskedTextFieldDelegateListener {
     
     public func textField(_ textField: UITextField, didFillMandatoryCharacters complete: Bool, didExtractValue value: String) {
         
-        if textField == self.cardField
-        {
+        if textField == self.cardField {
             self.cardField.errorMessage = ""
             self.paymentezCard.cardNumber = self.cardField.text?.replacingOccurrences(of: "-", with: "")
             if value.count >= 6 && self.cardType == .notSupported  { // check bin
@@ -808,8 +764,6 @@ extension PaymentezAddNativeViewController: MaskedTextFieldDelegateListener
             if value.count < 15 {
                 self.cardField.errorMessage = self.invalidCardTitle
             }
-            
-            
         }
         if textField == self.expirationField
         {
@@ -908,13 +862,11 @@ extension PaymentezAddNativeViewController {
 }
 
 extension PaymentezAddNativeViewController {
-    
-    func showSpinner(){
-        if !isWidget{
+    func showSpinner() {
+        if !isWidget {
             DispatchQueue.main.async {
                self.spinnerView.isHidden = false
             }
-            
         }
     }
     
@@ -922,52 +874,5 @@ extension PaymentezAddNativeViewController {
         DispatchQueue.main.async {
             self.spinnerView.isHidden = true
         }
-        
     }
 }
-
-
-@objc public extension UIViewController {
-    
-    func addPaymentezWidget(toView containerView:UIView,  delegate:PaymentezCardAddedDelegate?, uid:String, email:String) -> PaymentezAddNativeViewController{
-        let paymentezAddVC = PaymentezSDKClient.createAddWidget()
-        paymentezAddVC.uid = uid
-        paymentezAddVC.email = email
-        paymentezAddVC.addDelegate = delegate
-        self.addChild(paymentezAddVC)
-        let paymentezView = paymentezAddVC.view
-        paymentezView?.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(paymentezView!)
-        paymentezView?.topAnchor.constraint(equalTo: containerView.topAnchor).isActive = true
-        paymentezView?.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
-        paymentezView?.leftAnchor.constraint(equalTo: containerView.leftAnchor).isActive = true
-        paymentezView?.rightAnchor.constraint(equalTo: containerView.rightAnchor).isActive = true
-        paymentezAddVC.didMove(toParent: self)
-        return paymentezAddVC
-    }
-    func presentPaymentezViewController(delegate:PaymentezCardAddedDelegate, uid:String, email:String){
-        let paymentezAddVC = PaymentezAddNativeViewController(isWidget: false, isModal:true)
-        paymentezAddVC.isModal = true
-        paymentezAddVC.addDelegate = delegate
-        paymentezAddVC.uid = uid
-        paymentezAddVC.email = email
-        let navigationViewController = UINavigationController(rootViewController: paymentezAddVC)
-        navigationViewController.navigationBar.barTintColor = PaymentezStyle.baseBaseColor
-        navigationViewController.navigationBar.isTranslucent = false
-        self.present(navigationViewController, animated: true) {
-            
-        }
-    }
-    
-}
-
-@objc public extension UINavigationController {
-    func pushPaymentezViewController(delegate:PaymentezCardAddedDelegate, uid:String, email:String){
-        let paymentezAddVC = PaymentezAddNativeViewController(isWidget: false)
-        paymentezAddVC.uid = uid
-        paymentezAddVC.email = email
-        paymentezAddVC.addDelegate = delegate
-        self.pushViewController(paymentezAddVC, animated: true)
-    }
-}
-

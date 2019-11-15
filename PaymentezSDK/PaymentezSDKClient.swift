@@ -10,32 +10,24 @@ import Foundation
 import UIKit
 import CommonCrypto
 
-
-
-
-
-
 @objc(PaymentezSDKClient)
-@objcMembers open class PaymentezSDKClient:NSObject
-{
+@objcMembers open class PaymentezSDKClient: NSObject {
     static var inProgress = false
-    static var  apiCode = ""
-    static var  secretKey = ""
+    static var apiCode = ""
+    static var secretKey = ""
     static var enableTestMode = true
     static var request = PaymentezRequest(testMode: true)
     static var kountHandler:PaymentezSecure = PaymentezSecure(testMode: true)
     static var scanner = PaymentezCardScan()
     
     @objc(setRiskMerchantId:)
-    public static func setRiskMerchantId(_ merchantId:String)
-    {
+    public static func setRiskMerchantId(_ merchantId:String) {
         self.kountHandler.merchantId = merchantId
     }
     
     
     @objc(setEnvironment:secretKey:testMode:)
-    public static func setEnvironment(_ apiCode:String, secretKey:String, testMode:Bool)
-    {
+    public static func setEnvironment(_ apiCode:String, secretKey:String, testMode:Bool) {
         self.apiCode = apiCode
         self.secretKey = secretKey
         self.enableTestMode = testMode
@@ -43,9 +35,7 @@ import CommonCrypto
         self.kountHandler = PaymentezSecure(testMode: testMode)
     }
     
-    
-    private static func showAddViewControllerForUser(_ uid:String, email:String, presenter:UIViewController, callback:@escaping (_ error:PaymentezSDKError?, _ closed:Bool, _ added:Bool)->Void)
-    {
+    private static func showAddViewControllerForUser(_ uid:String, email:String, presenter:UIViewController, callback:@escaping (_ error:PaymentezSDKError?, _ closed:Bool, _ added:Bool) -> Void) {
         let vc = PaymentezAddViewController(callback: { (error, isClose, added) in
             
             callback(error, isClose, added)
@@ -91,19 +81,9 @@ import CommonCrypto
         
     }
     @objc
-    public static func getSecureSessionId()->String
-    {
+    public static func getSecureSessionId() -> String {
         return self.kountHandler.getSecureSessionId()
     }
-    
-    @objc
-    public static func createAddWidget()->PaymentezAddNativeViewController
-    {
-        let vc = PaymentezAddNativeViewController(isWidget: true)
-        
-        return vc
-    }
-    
     
     @objc public static func add(_ card:PaymentezCard, uid:String, email:String,  callback:@escaping (_ error:PaymentezSDKError?, _ cardAdded:PaymentezCard?)->Void)
     {
@@ -646,33 +626,20 @@ import CommonCrypto
     }
     
     
-    static fileprivate func generateAuthTimestamp() -> String
-    {
-        let timestamp = (Date()).timeIntervalSince1970
-        
-        return "\(timestamp.hashValue)"
+    static fileprivate func generateAuthTimestamp() -> String {
+        let timestamp = Date().timeIntervalSince1970 * 1000
+        return "\(Int(timestamp))"
     }
     
-    static fileprivate func generateAuthTokenV2()-> String
-    {
+    static fileprivate func generateAuthTokenV2() -> String {
         let timestamp = self.generateAuthTimestamp()
         let uniqueString = secretKey + timestamp
-        
-        let dataIn = uniqueString.data(using: String.Encoding.utf8)!
-        let res = NSMutableData(length: Int(CC_SHA256_DIGEST_LENGTH))
-        CC_SHA256((dataIn as NSData).bytes, CC_LONG(dataIn.count), res?.mutableBytes.assumingMemoryBound(to: UInt8.self))
-        var uniqueToken:String = res!.description
-        uniqueToken = uniqueToken.replacingOccurrences(of: " ", with: "")
-        uniqueToken = uniqueToken.replacingOccurrences(of: "<", with: "")
-        uniqueToken = uniqueToken.replacingOccurrences(of: ">", with: "")
-        
+        let uniqueToken = uniqueString.sha256()
         let tokenPlain = apiCode + ";" + timestamp + ";" + uniqueToken
-        
         return tokenPlain.base64Encoded()!
     }
     
-    static fileprivate func generateAuthToken(_ parameters:[String:Any], authTimestamp:String!) -> String
-    {
+    static fileprivate func generateAuthToken(_ parameters:[String:Any], authTimestamp:String!) -> String {
         let paramsDict = Array(parameters.keys).sorted(by: {$0 < $1})
         var paramsString = ""
         for paramName in paramsDict
@@ -694,9 +661,6 @@ import CommonCrypto
         return hash
         
     }
-    
-    
-    
     
     @objc public static func scanCard(_ presenterViewController:UIViewController, callback:@escaping (_ userCancelled:Bool, _ number:String?, _ expiry:String?, _ cvv:String?,_ card:PaymentezCard?) ->Void)
         
@@ -723,26 +687,6 @@ import CommonCrypto
         
     }
     
-    internal static func validateCard(cardNumber:String, callback:@escaping(_ data:[String:AnyObject]?,_ error:Error? ) ->Void)
-    {
-        let index = cardNumber.index(cardNumber.startIndex, offsetBy: 5)
-        
-        let bin  = String(cardNumber[...index])
-        let url = "/v2/card_bin/"+bin
-        request.makeRequestGetV2(url, parameters: [:], token: generateAuthTokenV2()) { (err, code, data) in
-            
-            if err != nil || code != 200{
-                callback(nil, err)
-            } else{
-                callback(data as? [String:AnyObject], err)
-            }
-        }
-        
-        
-    }
-    
-    
-    
 }
 
 extension String {
@@ -760,5 +704,31 @@ extension String {
             return String(data: data, encoding: .utf8)
         }
         return nil
+    }
+    
+    func sha256() -> String {
+        if let stringData = self.data(using: String.Encoding.utf8) {
+            return hexStringFromData(input: digest(input: stringData as NSData))
+        }
+        return ""
+    }
+
+    private func digest(input : NSData) -> NSData {
+        let digestLength = Int(CC_SHA256_DIGEST_LENGTH)
+        var hash = [UInt8](repeating: 0, count: digestLength)
+        CC_SHA256(input.bytes, UInt32(input.length), &hash)
+        return NSData(bytes: hash, length: digestLength)
+    }
+
+    private  func hexStringFromData(input: NSData) -> String {
+        var bytes = [UInt8](repeating: 0, count: input.length)
+        input.getBytes(&bytes, length: input.length)
+
+        var hexString = ""
+        for byte in bytes {
+            hexString += String(format:"%02x", UInt8(byte))
+        }
+
+        return hexString
     }
 }

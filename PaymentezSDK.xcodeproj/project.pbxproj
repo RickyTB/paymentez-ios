@@ -85,6 +85,7 @@
 		65DDE2A41F72F66A005C0FF9 /* KDataCollector.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DDE2A21F72F66A005C0FF9 /* KDataCollector.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		65DDE2A51F72F66A005C0FF9 /* libKountDataCollector.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65DDE2A31F72F66A005C0FF9 /* libKountDataCollector.a */; };
 		65EABEF41F6B8C370062DD31 /* PaymentezSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 409159071CE1A09100FE316B /* PaymentezSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		FAF22D6E237DCA8600E806BB /* PaymentezBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF22D6D237DCA8600E806BB /* PaymentezBrand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -171,6 +172,7 @@
 		65DB7DF12142FBC2000268AF /* PaymentezConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentezConstants.swift; sourceTree = "<group>"; };
 		65DDE2A21F72F66A005C0FF9 /* KDataCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KDataCollector.h; sourceTree = "<group>"; };
 		65DDE2A31F72F66A005C0FF9 /* libKountDataCollector.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libKountDataCollector.a; sourceTree = "<group>"; };
+		FAF22D6D237DCA8600E806BB /* PaymentezBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentezBrand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -258,6 +260,7 @@
 				402544CA1CE3E06A00F35B23 /* PaymentezAddViewController.xib */,
 				652927931F587136004A7D4C /* PaymentezAddNativeViewController.swift */,
 				652927941F587136004A7D4C /* PaymentezAddNativeViewController.xib */,
+				FAF22D6D237DCA8600E806BB /* PaymentezBrand.swift */,
 			);
 			path = PaymentezSDK;
 			sourceTree = "<group>";
@@ -403,7 +406,6 @@
 					};
 					409158DE1CE1A01000FE316B = {
 						CreatedOnToolsVersion = 7.3;
-						DevelopmentTeam = 96W7255R72;
 						LastSwiftMigration = 1020;
 						ProvisioningStyle = Manual;
 					};
@@ -482,6 +484,7 @@
 				65DA35001FCF777A005FA69C /* FreeState.swift in Sources */,
 				402544CB1CE3E06A00F35B23 /* PaymentezAddViewController.swift in Sources */,
 				65DB7DF22142FBC2000268AF /* PaymentezConstants.swift in Sources */,
+				FAF22D6E237DCA8600E806BB /* PaymentezBrand.swift in Sources */,
 				650EB6D31F5F3E510041EB81 /* Extension.swift in Sources */,
 				4091591D1CE1A09100FE316B /* PaymentezCardScan.swift in Sources */,
 				65AF51CC1F5DDECC00E7B4CB /* UITextField+fixCaretPosition.swift in Sources */,
@@ -672,7 +675,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 96W7255R72;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
