@@ -151,16 +151,6 @@ open class PaymentezAddNativeViewController: UIViewController {
     
     open var invalidDocumentTitle = "Invalid".localized
     
-    open var shouldShowScanCard = true {
-        didSet {
-            if shouldShowScanCard, scanButton.superview == nil {
-                self.cardNumberView.addArrangedSubview(self.scanButton)
-            } else {
-                self.scanButton.removeFromSuperview()
-            }
-        }
-    }
-    
     let cardField: SkyFloatingLabelTextField = {
         let field = SkyFloatingLabelTextField()
         field.placeholder = "Card Number".localized
@@ -252,13 +242,6 @@ open class PaymentezAddNativeViewController: UIViewController {
         imageView.contentMode = .scaleAspectFit
         
         return imageView
-    }()
-    
-    let scanButton: UIButton = {
-       let btn = UIButton()
-        btn.setImage(UIImage(named:"ic_photo_camera", in: Bundle(for: PaymentezCard.self), compatibleWith: nil), for:.normal)
-       btn.translatesAutoresizingMaskIntoConstraints = false
-        return btn
     }()
     
     lazy var addButton: UIButton = {
@@ -462,17 +445,13 @@ open class PaymentezAddNativeViewController: UIViewController {
         //SETUP nameView
         self.nameView.addArrangedSubview(self.nameField)
         
-        self.scanButton.addTarget(self, action: #selector(self.scanCard(_:)), for: .touchUpInside)
-        
         //SETUP cardNumberView
         self.cardNumberView.addArrangedSubview(self.logoView)
         self.cardNumberView.addArrangedSubview(self.cardField)
-        self.cardNumberView.addArrangedSubview(self.scanButton)
         
         self.logoView.widthAnchor.constraint(equalToConstant: 35).isActive = true
         self.logoView.heightAnchor.constraint(equalToConstant: 35).isActive = true
         //self.logoView.heightAnchor.constraint(equalToConstant: 35).isActive = true
-        self.scanButton.widthAnchor.constraint(equalToConstant: 40).isActive = true
         
         //SETUP VERIFICATIONVIEW
         
@@ -643,64 +622,6 @@ open class PaymentezAddNativeViewController: UIViewController {
                 return nil
             }
            return self.paymentezCard
-        }
-    }
-    
-    //MARK:Scan Card
-    
-    @objc func scanCard(_ sender: Any) {
-        PaymentezSDKClient.scanCard(self) { (closed, number, expiry, cvv, card) in
-            if !closed
-            {
-                guard let cardNumber = number else {
-                    return
-                }
-                let result: Mask.Result = self.cardMask.apply(
-                    toText: CaretString(
-                        string: number!,
-                        caretPosition: number!.endIndex
-                    ),
-                    autocomplete: false // you may consider disabling autocompletion for your case
-                )
-                let resultEx: Mask.Result = self.expirationMask.apply(
-                    toText: CaretString(
-                        string: expiry!,
-                        caretPosition: expiry!.endIndex
-                    ),
-                    autocomplete: false // you may consider disabling autocompletion for your case
-                )
-                let resultCvv: Mask.Result = self.cvcMask.apply(
-                    toText: CaretString(
-                        string: cvv!,
-                        caretPosition: cvv!.endIndex
-                    ),
-                    autocomplete: false // you may consider disabling autocompletion for your case
-                )
-                self.cardField.text = result.formattedText.string
-                
-                self.expirationField.text = resultEx.formattedText.string
-                self.cvcField.text = resultCvv.formattedText.string
-                self.paymentezCard.cvc = self.cvcField.text
-                
-                self.paymentezCard.cardNumber = self.cardField.text?.replacingOccurrences(of: "-", with: "")
-                self.cardType = PaymentezCard.getTypeCard((self.paymentezCard.cardNumber)!)
-                let valExp = self.expirationField.text!.components(separatedBy: "/")
-                if valExp.count > 1 {
-                    let expiryYear = Int(valExp[1])! + 2000
-                    let expiryMonth = valExp[0]
-                    self.paymentezCard.expiryYear =  "\(expiryYear)"
-                    self.paymentezCard.expiryMonth =  expiryMonth
-                }
-                
-                //Validate Card
-            
-                if cardNumber.count >= 10{
-                    let indexEnd = cardNumber.index(cardNumber.startIndex, offsetBy:10)
-                    self.validateCard(String(cardNumber[..<indexEnd]))
-                } else {
-                    self.validateCard(cardNumber)
-                }
-            }
         }
     }
     

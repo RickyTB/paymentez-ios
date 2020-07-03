@@ -18,13 +18,11 @@ import CommonCrypto
     static var enableTestMode = true
     static var request = PaymentezRequest(testMode: true)
     static var kountHandler:PaymentezSecure = PaymentezSecure(testMode: true)
-    static var scanner = PaymentezCardScan()
     
     @objc(setRiskMerchantId:)
     public static func setRiskMerchantId(_ merchantId:String) {
         self.kountHandler.merchantId = merchantId
     }
-    
     
     @objc(setEnvironment:secretKey:testMode:)
     public static func setEnvironment(_ apiCode:String, secretKey:String, testMode:Bool) {
@@ -659,31 +657,6 @@ import CommonCrypto
         hash = hash.replacingOccurrences(of: ">", with: "")
         //print(hash)
         return hash
-        
-    }
-    
-    @objc public static func scanCard(_ presenterViewController:UIViewController, callback:@escaping (_ userCancelled:Bool, _ number:String?, _ expiry:String?, _ cvv:String?,_ card:PaymentezCard?) ->Void)
-        
-    {
-        self.scanner.showScan(presenterViewController) { (infoCard) in
-            
-            if infoCard == nil
-            {
-                callback(true, nil, nil, nil, nil)
-            }
-            else
-            {
-                let card = PaymentezCard()
-                
-                card.cardNumber = infoCard!.cardNumber
-                card.cvc = infoCard!.cvv
-                card.expiryYear = "\(infoCard!.expiryYear)"
-                card.expiryMonth = String(format: "%02i",infoCard!.expiryMonth)
-                callback(false, infoCard!.cardNumber, String(format: "%02i/%i",infoCard!.expiryMonth, infoCard!.expiryYear), infoCard!.cvv, card)
-                
-            }
-            
-        }
         
     }
     

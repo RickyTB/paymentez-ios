@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "KDataCollector.h"
-#import "CardIO.h"
-
 
 //! Project version number for PaymentezSDK.
 FOUNDATION_EXPORT double PaymentezSDKVersionNumber;
